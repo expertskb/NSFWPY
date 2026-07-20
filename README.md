@@ -1,6 +1,7 @@
 # NSFWPY 🔥 (`nsfwpy-onnx`)
 
-[![PyPI Version](https://img.shields.io/pypi/v/nsfwpy-onnx.svg?color=blue)](https://pypi.org/project/nsfwpy-onnx/)
+[![PyPI Version](https://img.shields.io/pypi/v/nsfwpy-onnx?color=blue&label=PyPI%20version)](https://pypi.org/project/nsfwpy-onnx/)
+[![PyPI Downloads](https://img.shields.io/pypi/dm/nsfwpy-onnx?color=green)](https://pypi.org/project/nsfwpy-onnx/)
 [![GitHub Repo](https://img.shields.io/badge/GitHub-expertskb%2Fnsfwpy--onnx-blue?logo=github)](https://github.com/expertskb/nsfwpy-onnx)
 [![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.14-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
@@ -53,8 +54,8 @@ import nsfwpy
 # Load model (auto-downloads from HuggingFace if missing)
 model = nsfwpy.load_model("mobilenet_v2")
 
-# Classify static image or animated WebP / GIF URL
-results = model.classify("https://example.com/animation.webp", top_k=5)
+# Classify static image or animated WebP / GIF
+results = model.classify("sample.jpg", top_k=5)
 print(results)
 # Output:
 # [
@@ -76,7 +77,7 @@ batch_results = model.classify_batch(["img1.jpg", "anim2.gif"])
 nsfwpy classify path/to/image.jpg
 
 # Output formatted JSON
-nsfwpy classify https://example.com/animation.webp --json-out
+nsfwpy classify sample.jpg --json-out
 
 # Choose a specific model architecture
 nsfwpy classify sample.jpg --model inception_v3
@@ -107,7 +108,7 @@ Professional production-ready scripts are included under [`examples/`](file:///h
 
 Run any example using:
 ```bash
-python examples/06_animated_webp_gif_classification.py
+python examples/01_basic_classification.py
 ```
 
 ---
