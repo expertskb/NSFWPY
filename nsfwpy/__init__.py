@@ -7,7 +7,7 @@ from .core import NSFWModel, load_model, load, preload_model, preload
 from .constants import NSFW_CATEGORIES, DEFAULT_MODEL_PATHS
 from .image import load_image, load_animated_frames, preprocess_image
 
-__version__ = "1.1.1"
+__version__ = "1.1.2"
 
 __all__ = [
     "NSFWModel",

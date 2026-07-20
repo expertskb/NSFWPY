@@ -49,14 +49,18 @@ def resolve_and_ensure_model(
     if not filename.endswith(".onnx"):
         filename += ".onnx"
 
-    # Search list of candidate cache paths:
+    # Search list of candidate cache paths across Linux, Windows, macOS, Android, and iOS/Tablets:
     system_drive = os.environ.get("SystemDrive", "C:")
     candidate_paths = [
         USER_CACHE_DIR / filename,
         Path("models") / filename,
         Path(system_drive) / "nsfwpy" / "models" / filename,
-        Path("/var/cache/nsfwpy/models") / filename,
+        Path("/Library/Caches/nsfwpy/models") / filename,
+        Path.home() / "Library" / "Caches" / "nsfwpy" / "models" / filename,
         Path("/etc/nsfwpy/models") / filename,
+        Path("/var/cache/nsfwpy/models") / filename,
+        Path("/sdcard/.nsfwpy/models") / filename,
+        Path.home() / "Documents" / ".nsfwpy" / "models" / filename,
         Path.home() / ".nsfwpy" / "models" / filename,
         Path.home() / ".cache" / "nsfwpy" / "models" / filename,
     ]

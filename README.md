@@ -1,6 +1,6 @@
-# NSFWPY 🔥 (`nsfwpy-onnx` v1.1.1)
+# NSFWPY 🔥 (`nsfwpy-onnx` v1.1.2)
 
-[![PyPI Version](https://img.shields.io/pypi/v/nsfwpy-onnx?color=blue&label=PyPI%20version%201.1.1)](https://pypi.org/project/nsfwpy-onnx/)
+[![PyPI Version](https://img.shields.io/pypi/v/nsfwpy-onnx?color=blue&label=PyPI%20version%201.1.2)](https://pypi.org/project/nsfwpy-onnx/)
 [![PyPI Downloads](https://img.shields.io/pypi/dm/nsfwpy-onnx?color=green)](https://pypi.org/project/nsfwpy-onnx/)
 [![GitHub Repo](https://img.shields.io/badge/GitHub-expertskb%2Fnsfwpy--onnx-blue?logo=github)](https://github.com/expertskb/nsfwpy-onnx)
 [![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.14-blue)](https://www.python.org/)
@@ -33,7 +33,20 @@ Classify static images (JPEG, PNG, WEBP) and **Animated WebP / GIF / APNG** form
 | **Framework Overhead** | Light C++ ONNX Runtime (~150MB RAM) | Heavy TensorFlow / TFJS-Node (500MB+ RAM) | Heavy PyTorch / TensorFlow |
 | **Startup Preloading (`nsfwpy.preload()`)** | ✅ **Pre-warmed CPU execution & graph** | ❌ Manual warmup script required | ❌ Cold start delays on first request |
 | **Animated WebP & GIF** | ✅ Built-in keyframe sampling & scanning | ❌ Requires manual frame splitting | ❌ Static images only |
-| **System Cache & Recovery** | ✅ Cross-platform (`/etc`, `C:\`, `~/.nsfwpy`) + auto-recovery | ❌ Basic local cache | ❌ Manual download required |
+| **System Cache & Recovery** | ✅ **Full Cross-Platform** (Linux, Windows, macOS, Android/Termux, iOS/Tablet) + auto-recovery | ❌ Basic local cache | ❌ Manual download required |
+
+---
+
+### 🖥️ Cross-Platform System Model Caching
+
+`nsfwpy` automatically detects host OS and environment permissions to cache models in optimal system directories:
+
+- **Linux / Servers**: `/etc/nsfwpy/models` or `/var/cache/nsfwpy/models`
+- **Windows**: `C:\nsfwpy\models` or `C:\ProgramData\nsfwpy\models`
+- **macOS**: `/Library/Caches/nsfwpy/models` or `~/Library/Caches/nsfwpy/models`
+- **Android / Termux / Mobile**: `/sdcard/.nsfwpy/models` or `$PREFIX/tmp/nsfwpy/models`
+- **iOS / iPadOS / Tablets**: `~/Documents/.nsfwpy/models`
+- **Automatic Fallback**: `~/.nsfwpy/models` (if running as a non-root standard user without system write access)
 
 ---
 

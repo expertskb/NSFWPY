@@ -6,7 +6,7 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(
     name="nsfwpy-onnx",
-    version="1.1.1",
+    version="1.1.2",
     description="Python 3.14 CPU-optimized ultra-lightweight NSFWPY image classification library",
     long_description=long_description,
     long_description_content_type="text/markdown",

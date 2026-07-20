@@ -35,21 +35,40 @@ DEFAULT_MODEL_PATHS = MODEL_FILENAMES
 def get_system_cache_dir() -> Path:
     """
     Get safe cross-platform system model cache directory:
-    - Windows: C:\\nsfwpy\\models (or C:\\ProgramData\\nsfwpy\\models)
-    - Linux / Unix: /etc/nsfwpy/models (or /var/cache/nsfwpy/models)
+    - Windows: C:\\nsfwpy\\models or C:\\ProgramData\\nsfwpy\\models
+    - macOS: /Library/Caches/nsfwpy/models or ~/Library/Caches/nsfwpy/models
+    - Linux / Server: /etc/nsfwpy/models or /var/cache/nsfwpy/models
+    - Android (Termux / Mobile): /sdcard/.nsfwpy/models or $PREFIX/tmp/nsfwpy/models
+    - iOS / iPadOS / Tablet: ~/Documents/.nsfwpy/models
     Falls back to user home directory (~/.nsfwpy/models) if non-root without write permission.
     """
+    import sys
+
+    candidates = []
+
     if os.name == "nt":
         system_drive = os.environ.get("SystemDrive", "C:")
-        candidates = [
+        candidates.extend([
             Path(system_drive) / "nsfwpy" / "models",
             Path(system_drive) / "ProgramData" / "nsfwpy" / "models",
-        ]
+        ])
+    elif sys.platform == "darwin":
+        candidates.extend([
+            Path("/Library/Caches/nsfwpy/models"),
+            Path("/etc/nsfwpy/models"),
+            Path.home() / "Library" / "Caches" / "nsfwpy" / "models",
+        ])
     else:
-        candidates = [
+        # Linux / Android / iOS / Termux / Unix
+        candidates.extend([
             Path("/etc/nsfwpy/models"),
             Path("/var/cache/nsfwpy/models"),
-        ]
+            Path("/sdcard/.nsfwpy/models"),
+            Path.home() / "Documents" / ".nsfwpy" / "models",
+        ])
+        prefix = os.environ.get("PREFIX")
+        if prefix:
+            candidates.append(Path(prefix) / "tmp" / "nsfwpy" / "models")
 
     for candidate in candidates:
         try:
