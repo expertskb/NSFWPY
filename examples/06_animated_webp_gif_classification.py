@@ -5,9 +5,6 @@ Demonstrates how to classify animated WebP, GIF, and APNG images by sampling
 keyframes across the animation duration.
 """
 
-import io
-import numpy as np
-from PIL import Image
 import nsfwpy
 
 def main():
@@ -15,31 +12,17 @@ def main():
     print(" NSFWPY - Example 06: Animated WebP / GIF Classification")
     print("=" * 60)
 
-    # 1. Load Model
+    # Load Model
     model = nsfwpy.load_model("mobilenet_v2")
 
-    # 2. Create an in-memory synthetic animated WebP image (5 frames)
-    print("\nCreating synthetic animated WebP image in memory...")
-    frames = [
-        Image.fromarray(np.uint8(np.random.rand(224, 224, 3) * 255))
-        for _ in range(5)
-    ]
-    animated_bytes = io.BytesIO()
-    frames[0].save(
-        animated_bytes,
-        format="WEBP",
-        save_all=True,
-        append_images=frames[1:],
-        duration=200,
-        loop=0,
-    )
-    raw_animated_data = animated_bytes.getvalue()
+    # Animated WebP URL
+    animated_url = "https://example.com/hello.webp"
+    print(f"\nClassifying Animated WebP URL:\n{animated_url}\n")
 
-    # 3. Classify animated image keyframes
-    print("Classifying Animated WebP keyframes...")
-    results = model.classify(raw_animated_data, top_k=5, max_animated_frames=5)
+    # Classify animated image keyframes
+    results = model.classify(animated_url, top_k=5, max_animated_frames=10)
 
-    print("\nAnimated WebP Keyframe Aggregated Breakdown:")
+    print("Animated WebP Keyframe Aggregated Breakdown:")
     print("-" * 50)
     for p in results:
         category = p["className"]
