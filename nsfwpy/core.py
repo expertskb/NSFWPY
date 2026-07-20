@@ -12,7 +12,8 @@ import onnxruntime as ort
 from .constants import (
     NSFW_CATEGORIES,
     DEFAULT_IMAGE_SIZE,
-    DEFAULT_MODEL_PATHS,
+    MODEL_FILENAMES,
+    USER_CACHE_DIR,
     MODEL_DOWNLOAD_URLS,
 )
 from .image import preprocess_image, ImageInput
@@ -24,52 +25,57 @@ def softmax(x: np.ndarray, axis: int = -1) -> np.ndarray:
     return e_x / e_x.sum(axis=axis, keepdims=True)
 
 
-def ensure_model_file(model_name_or_path: str) -> str:
+def resolve_and_ensure_model(model_name_or_path: str) -> str:
     """
-    Check if the model exists locally. If not, auto-download it from Hugging Face.
+    Resolve model path from:
+    1. Direct file path
+    2. Local workspace ./models/ folder
+    3. Global user cache ~/.cache/nsfwpy/models/
+    4. Auto-download from Hugging Face if missing.
     """
+    # 1. Direct file path check
+    if os.path.exists(model_name_or_path):
+        return model_name_or_path
+
     key = model_name_or_path.lower()
-    target_path = DEFAULT_MODEL_PATHS.get(key, model_name_or_path)
+    filename = MODEL_FILENAMES.get(key, model_name_or_path)
+    if not filename.endswith(".onnx"):
+        filename += ".onnx"
 
-    # Check if file exists
-    if os.path.exists(target_path):
-        return target_path
+    # 2. Check local workspace ./models/ folder
+    local_workspace_path = Path("models") / filename
+    if local_workspace_path.exists():
+        return str(local_workspace_path)
 
-    # Check if download URL is available for this model key
+    # 3. Check global user cache folder ~/.cache/nsfwpy/models/
+    cache_path = USER_CACHE_DIR / filename
+    if cache_path.exists():
+        return str(cache_path)
+
+    # 4. Check download URL mapping
     url = MODEL_DOWNLOAD_URLS.get(key)
-    if not url and key in ["mobilenet-v2.onnx", "mobilenet-v3.onnx", "inception-v3.onnx"]:
+    if not url:
         # Match by filename
-        filename_map = {
-            "mobilenet-v2.onnx": "mobilenet_v2",
-            "mobilenet-v3.onnx": "mobilenet_v3",
-            "inception-v3.onnx": "inception_v3",
-        }
-        url = MODEL_DOWNLOAD_URLS.get(filename_map.get(key, ""))
+        for k, fname in MODEL_FILENAMES.items():
+            if fname.lower() == filename.lower():
+                url = MODEL_DOWNLOAD_URLS.get(k)
+                break
 
     if not url:
-        if not os.path.exists(target_path):
-            raise FileNotFoundError(
-                f"Model file not found at '{target_path}' and no auto-download URL registered."
-            )
-        return target_path
+        raise FileNotFoundError(
+            f"Model file '{model_name_or_path}' not found locally or in cache ({cache_path})."
+        )
 
-    # Ensure target directory exists
-    dir_name = os.path.dirname(target_path) or "models"
-    os.makedirs(dir_name, exist_ok=True)
+    USER_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    target_download_path = cache_path
 
-    print(f"\n[NSFWPY] Model file '{target_path}' not found locally.")
-    print(f"[NSFWPY] Auto-downloading from Hugging Face: {url}")
+    print(f"\n[NSFWPY] Model file not found in local path or cache.")
+    print(f"[NSFWPY] Auto-downloading '{key}' from Hugging Face: {url}")
+    print(f"[NSFWPY] Target destination: {target_download_path}")
 
     try:
-        def _progress_hook(block_num, block_size, total_size):
-            downloaded = block_num * block_size
-            if total_size > 0:
-                percent = min(100, (downloaded / total_size) * 100)
-                sys.stdout.write(f"\rDownloading model: {percent:>5.1f}% [{downloaded//1024} KB / {total_size//1024} KB]")
-                sys.stdout.flush()
-
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req) as resp, open(target_path, "wb") as out_file:
+        with urllib.request.urlopen(req) as resp, open(target_download_path, "wb") as out_file:
             total_size = int(resp.headers.get("Content-Length", 0))
             block_size = 8192
             downloaded = 0
@@ -81,16 +87,18 @@ def ensure_model_file(model_name_or_path: str) -> str:
                 out_file.write(buffer)
                 if total_size > 0:
                     percent = min(100, (downloaded / total_size) * 100)
-                    sys.stdout.write(f"\rDownloading model: {percent:>5.1f}% [{downloaded//1024} KB / {total_size//1024} KB]")
+                    sys.stdout.write(
+                        f"\rDownloading model: {percent:>5.1f}% [{downloaded//1024} KB / {total_size//1024} KB]"
+                    )
                     sys.stdout.flush()
 
         print("\n[NSFWPY] Model download complete!\n")
     except Exception as e:
-        if os.path.exists(target_path):
-            os.remove(target_path)
+        if target_download_path.exists():
+            target_download_path.unlink()
         raise RuntimeError(f"Failed to download ONNX model from Hugging Face: {e}")
 
-    return target_path
+    return str(target_download_path)
 
 
 class NSFWModel:
@@ -104,8 +112,8 @@ class NSFWModel:
         categories: Optional[List[str]] = None,
         num_threads: Optional[int] = None,
     ):
-        # Auto-download model if missing
-        verified_path = ensure_model_file(model_path)
+        # Resolve path or auto-download model
+        verified_path = resolve_and_ensure_model(model_path)
         self.model_path = verified_path
 
         # Configure CPU-friendly session options
@@ -241,5 +249,4 @@ def load_model(
     Helper function to load an NSFWModel by key ('mobilenet_v2', 'mobilenet_v3', 'inception_v3')
     or direct file path. Auto-downloads from HuggingFace if missing locally.
     """
-    path = DEFAULT_MODEL_PATHS.get(model_name_or_path.lower(), model_name_or_path)
-    return NSFWModel(model_path=path, num_threads=num_threads)
+    return NSFWModel(model_path=model_name_or_path, num_threads=num_threads)

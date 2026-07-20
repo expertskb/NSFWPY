@@ -6,7 +6,7 @@ from .core import NSFWModel, load_model
 from .constants import NSFW_CATEGORIES, DEFAULT_MODEL_PATHS
 from .image import load_image, preprocess_image
 
-__version__ = "1.0.0"
+__version__ = "1.0.2"
 
 __all__ = [
     "NSFWModel",

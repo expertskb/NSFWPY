@@ -1,6 +1,8 @@
 """
 Constants and configuration defaults for NSFWPY in Python.
 """
+import os
+from pathlib import Path
 from typing import List, Dict
 
 # Standard NSFWJS 5 categories
@@ -15,14 +17,20 @@ NSFW_CATEGORIES: List[str] = [
 # Image preprocessing defaults
 DEFAULT_IMAGE_SIZE = (224, 224)
 
-# Available local pre-built ONNX models
-DEFAULT_MODEL_PATHS: Dict[str, str] = {
-    "mobilenet_v2": "models/MobileNet-v2.onnx",
-    "mobilenet_v3": "models/MobileNet-v3.onnx",
-    "inception_v3": "models/Inception-v3.onnx",
+# Model filenames
+MODEL_FILENAMES: Dict[str, str] = {
+    "mobilenet_v2": "MobileNet-v2.onnx",
+    "mobilenet_v3": "MobileNet-v3.onnx",
+    "inception_v3": "Inception-v3.onnx",
 }
 
-# Hugging Face model download URLs if local model is missing
+# Alias for backwards compatibility
+DEFAULT_MODEL_PATHS = MODEL_FILENAMES
+
+# Default model directory cache: ~/.cache/nsfwpy/models/
+USER_CACHE_DIR = Path.home() / ".cache" / "nsfwpy" / "models"
+
+# Hugging Face model download URLs
 MODEL_DOWNLOAD_URLS: Dict[str, str] = {
     "mobilenet_v2": "https://huggingface.co/expertskb/nsfwpy/resolve/main/MobileNet-v2.onnx?download=true",
     "mobilenet_v3": "https://huggingface.co/expertskb/nsfwpy/resolve/main/MobileNet-v3.onnx?download=true",
