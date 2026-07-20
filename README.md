@@ -8,13 +8,14 @@
 
 High-performance, CPU-optimized Python 3.14 port of **NSFWJS** using **ONNX Runtime**.
 
-Classify images into 5 canonical NSFW categories (**Drawing**, **Hentai**, **Neutral**, **Porn**, **Sexy**) with fast CPU inference, zero GPU requirement, HuggingFace auto-downloading, and a clean Python API + CLI.
+Classify static images (JPEG, PNG, WEBP) and **Animated WebP / GIF / APNG** formats into 5 canonical NSFW categories (**Drawing**, **Hentai**, **Neutral**, **Porn**, **Sexy**).
 
 ---
 
 ## 🌟 Key Features
 
 - 🐍 **Python 3.14 Native**: Fully compatible with Python 3.10+ and Python 3.14.
+- 🎞️ **Animated WebP & GIF Support**: Keyframe sampling and frame-aggregated safety classification for Animated WebP, GIF, and APNG formats.
 - ⚡ **CPU Optimized**: Powered by `onnxruntime` tuned for multi-threaded CPU execution with graph optimization.
 - 📦 **HuggingFace Auto-Download**: Automatically downloads missing ONNX models from [Hugging Face (`expertskb/nsfwpy`)](https://huggingface.co/expertskb/nsfwpy).
 - 🪶 **Ultra Lightweight**: Minimal dependencies (`numpy`, `pillow`, `onnxruntime`, `click`). No heavy web servers required.
@@ -52,20 +53,20 @@ import nsfwpy
 # Load model (auto-downloads from HuggingFace if missing)
 model = nsfwpy.load_model("mobilenet_v2")
 
-# Classify single image (File path, URL, bytes, or PIL Image)
-results = model.classify("path/to/image.jpg", top_k=5)
+# Classify static image or animated WebP / GIF URL
+results = model.classify("https://example.com/animation.webp", top_k=5)
 print(results)
 # Output:
 # [
-#   {'className': 'Neutral', 'probability': 0.85231},
-#   {'className': 'Drawing', 'probability': 0.08412},
-#   {'className': 'Sexy', 'probability': 0.04123},
-#   {'className': 'Porn', 'probability': 0.01211},
-#   {'className': 'Hentai', 'probability': 0.01023}
+#   {'className': 'Neutral', 'probability': 0.6280},
+#   {'className': 'Drawing', 'probability': 0.2822},
+#   {'className': 'Sexy', 'probability': 0.0548},
+#   {'className': 'Porn', 'probability': 0.0246},
+#   {'className': 'Hentai', 'probability': 0.0104}
 # ]
 
 # Batch image classification
-batch_results = model.classify_batch(["img1.jpg", "img2.png"])
+batch_results = model.classify_batch(["img1.jpg", "anim2.gif"])
 ```
 
 ### 2. Command Line Interface (CLI)
@@ -75,7 +76,7 @@ batch_results = model.classify_batch(["img1.jpg", "img2.png"])
 nsfwpy classify path/to/image.jpg
 
 # Output formatted JSON
-nsfwpy classify https://example.com/sample.jpg --json-out
+nsfwpy classify https://example.com/animation.webp --json-out
 
 # Choose a specific model architecture
 nsfwpy classify sample.jpg --model inception_v3
@@ -102,10 +103,11 @@ Professional production-ready scripts are included under [`examples/`](file:///h
 - **[`examples/03_batch_classification.py`](file:///home/shakib/Workspace/IMAGE%20DETECTOR/examples/03_batch_classification.py)**: High-throughput batch benchmarking.
 - **[`examples/04_pil_and_bytes_classification.py`](file:///home/shakib/Workspace/IMAGE%20DETECTOR/examples/04_pil_and_bytes_classification.py)**: In-memory PIL and bytes buffer processing.
 - **[`examples/05_custom_model_and_threading.py`](file:///home/shakib/Workspace/IMAGE%20DETECTOR/examples/05_custom_model_and_threading.py)**: Model backbones & ONNX CPU thread tuning.
+- **[`examples/06_animated_webp_gif_classification.py`](file:///home/shakib/Workspace/IMAGE%20DETECTOR/examples/06_animated_webp_gif_classification.py)**: Animated WebP & GIF frame-aggregated classification.
 
 Run any example using:
 ```bash
-python examples/01_basic_classification.py
+python examples/06_animated_webp_gif_classification.py
 ```
 
 ---

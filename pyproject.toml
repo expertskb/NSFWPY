@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nsfwpy-onnx"
-version = "1.0.2"
+version = "1.0.5"
 description = "Python 3.14 CPU-optimized ultra-lightweight NSFWPY image classification library"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
-keywords = ["nsfw", "nsfwjs", "onnx", "image-classification", "safety", "ai"]
+keywords = ["nsfw", "nsfwjs", "onnx", "image-classification", "safety", "ai", "animated-webp", "gif"]
 authors = [
     { name = "expertskb" }
 ]

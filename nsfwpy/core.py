@@ -1,11 +1,12 @@
 """
 Core ONNXRuntime inference engine and NSFWModel implementation for NSFWPY.
+Supports static images and animated WebP, GIF, and APNG formats.
 """
 import os
 import sys
 import urllib.request
 from pathlib import Path
-from typing import List, Dict, Union, Optional, Tuple
+from typing import List, Dict, Union, Optional, Tuple, Any
 import numpy as np
 import onnxruntime as ort
 
@@ -16,7 +17,11 @@ from .constants import (
     USER_CACHE_DIR,
     MODEL_DOWNLOAD_URLS,
 )
-from .image import preprocess_image, ImageInput
+from .image import (
+    preprocess_image,
+    load_animated_frames,
+    ImageInput,
+)
 
 
 def softmax(x: np.ndarray, axis: int = -1) -> np.ndarray:
@@ -33,7 +38,6 @@ def resolve_and_ensure_model(model_name_or_path: str) -> str:
     3. Global user cache ~/.cache/nsfwpy/models/
     4. Auto-download from Hugging Face if missing.
     """
-    # 1. Direct file path check
     if os.path.exists(model_name_or_path):
         return model_name_or_path
 
@@ -42,20 +46,16 @@ def resolve_and_ensure_model(model_name_or_path: str) -> str:
     if not filename.endswith(".onnx"):
         filename += ".onnx"
 
-    # 2. Check local workspace ./models/ folder
     local_workspace_path = Path("models") / filename
     if local_workspace_path.exists():
         return str(local_workspace_path)
 
-    # 3. Check global user cache folder ~/.cache/nsfwpy/models/
     cache_path = USER_CACHE_DIR / filename
     if cache_path.exists():
         return str(cache_path)
 
-    # 4. Check download URL mapping
     url = MODEL_DOWNLOAD_URLS.get(key)
     if not url:
-        # Match by filename
         for k, fname in MODEL_FILENAMES.items():
             if fname.lower() == filename.lower():
                 url = MODEL_DOWNLOAD_URLS.get(k)
@@ -104,6 +104,7 @@ def resolve_and_ensure_model(model_name_or_path: str) -> str:
 class NSFWModel:
     """
     NSFWPY Model wrapper using ONNXRuntime with CPU execution optimization.
+    Supports static & animated WebP, GIF, and APNG images.
     """
 
     def __init__(
@@ -112,11 +113,9 @@ class NSFWModel:
         categories: Optional[List[str]] = None,
         num_threads: Optional[int] = None,
     ):
-        # Resolve path or auto-download model
         verified_path = resolve_and_ensure_model(model_path)
         self.model_path = verified_path
 
-        # Configure CPU-friendly session options
         sess_options = ort.SessionOptions()
         cpus = os.cpu_count() or 4
         sess_options.intra_op_num_threads = num_threads or cpus
@@ -130,7 +129,6 @@ class NSFWModel:
             providers=["CPUExecutionProvider"],
         )
 
-        # Extract input/output details
         self.input_info = self.session.get_inputs()[0]
         self.input_name = self.input_info.name
         self.input_shape = self.input_info.shape
@@ -138,7 +136,6 @@ class NSFWModel:
         self.output_info = self.session.get_outputs()[0]
         self.output_name = self.output_info.name
 
-        # Target image resolution from model input shape
         if len(self.input_shape) == 4:
             if self.input_shape[1] == 3:  # NCHW
                 h, w = self.input_shape[2], self.input_shape[3]
@@ -151,7 +148,6 @@ class NSFWModel:
         else:
             self.target_size = DEFAULT_IMAGE_SIZE
 
-        # Set category names
         self.categories = categories or NSFW_CATEGORIES
 
     def _map_logits_to_categories(
@@ -165,18 +161,15 @@ class NSFWModel:
         cat_probs: Dict[str, float] = {}
 
         if num_classes == 5:
-            # Exact 5-class match
             for idx, name in enumerate(self.categories):
                 cat_probs[name] = float(probs[idx])
         elif num_classes == 2:
-            # Binary classification (Normal vs NSFW)
             cat_probs["Neutral"] = float(probs[0])
             cat_probs["Porn"] = float(probs[1])
             cat_probs["Drawing"] = 0.0
             cat_probs["Hentai"] = 0.0
             cat_probs["Sexy"] = 0.0
         else:
-            # Multi-class ImageNet backbone: Aggregate probability distribution into 5 NSFW categories
             top_indices = np.argsort(probs)[::-1][:10]
             top_sum = float(np.sum(probs[top_indices]))
 
@@ -194,13 +187,11 @@ class NSFWModel:
                 float(probs[top_indices[4]]) if len(top_indices) > 4 else 0.05
             )
 
-            # Re-normalize to ensure probabilities sum up to 1.0
             total = sum(cat_probs.values())
             if total > 0:
                 for k in cat_probs:
                     cat_probs[k] /= total
 
-        # Format as list of objects sorted descending by probability
         result = [
             {"className": k, "probability": round(float(v), 5)}
             for k, v in cat_probs.items()
@@ -209,25 +200,77 @@ class NSFWModel:
         return result
 
     def classify(
-        self, image_input: ImageInput, top_k: Optional[int] = None
+        self,
+        image_input: Any,
+        top_k: Optional[int] = None,
+        max_animated_frames: int = 10,
     ) -> List[Dict[str, Union[str, float]]]:
         """
-        Classify a single image and return category probabilities.
+        Classify a single image or animated WebP/GIF/APNG.
+        If the image is animated, extracts keyframes and aggregates max probabilities across frames.
         """
-        tensor = preprocess_image(
-            image_input,
-            target_size=self.target_size,
-            input_shape=self.input_shape,
-        )
-        logits = self.session.run([self.output_name], {self.input_name: tensor})[0]
-        results = self._map_logits_to_categories(logits)
+        frames = load_animated_frames(image_input, max_frames=max_animated_frames)
+
+        if len(frames) == 1:
+            tensor = preprocess_image(
+                frames[0],
+                target_size=self.target_size,
+                input_shape=self.input_shape,
+            )
+            logits = self.session.run([self.output_name], {self.input_name: tensor})[0]
+            results = self._map_logits_to_categories(logits)
+        else:
+            # Animated image: aggregate frame predictions by taking max probability per category
+            category_max_probs: Dict[str, float] = {}
+
+            for frame in frames:
+                tensor = preprocess_image(
+                    frame,
+                    target_size=self.target_size,
+                    input_shape=self.input_shape,
+                )
+                logits = self.session.run([self.output_name], {self.input_name: tensor})[0]
+                frame_preds = self._map_logits_to_categories(logits)
+
+                for item in frame_preds:
+                    cat = item["className"]
+                    prob = item["probability"]
+                    if cat not in category_max_probs or prob > category_max_probs[cat]:
+                        category_max_probs[cat] = prob
+
+            # Re-normalize aggregated max probabilities
+            total = sum(category_max_probs.values())
+            if total > 0:
+                for k in category_max_probs:
+                    category_max_probs[k] /= total
+
+            results = [
+                {"className": k, "probability": round(float(v), 5)}
+                for k, v in category_max_probs.items()
+            ]
+            results.sort(key=lambda x: x["probability"], reverse=True)
 
         if top_k is not None and top_k > 0:
             results = results[:top_k]
         return results
 
+    def classify_gif(
+        self,
+        image_input: Any,
+        top_k: Optional[int] = None,
+        max_frames: int = 10,
+    ) -> List[Dict[str, Union[str, float]]]:
+        """
+        Alias method specifically for animated WebP / GIF / APNG classification.
+        """
+        return self.classify(
+            image_input=image_input,
+            top_k=top_k,
+            max_animated_frames=max_frames,
+        )
+
     def classify_batch(
-        self, images: List[ImageInput], top_k: Optional[int] = None
+        self, images: List[Any], top_k: Optional[int] = None
     ) -> List[List[Dict[str, Union[str, float]]]]:
         """
         Classify a batch of images concurrently or sequentially (CPU friendly).
@@ -250,3 +293,6 @@ def load_model(
     or direct file path. Auto-downloads from HuggingFace if missing locally.
     """
     return NSFWModel(model_path=model_name_or_path, num_threads=num_threads)
+
+
+load = load_model

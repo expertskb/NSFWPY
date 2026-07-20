@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="nsfwpy-onnx",
-    version="1.0.1",
+    version="1.0.5",
     description="Python 3.14 CPU-optimized ultra-lightweight NSFWPY image classification library",
     author="expertskb",
     url="https://github.com/expertskb/nsfwpy-onnx",

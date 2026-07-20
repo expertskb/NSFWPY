@@ -10,7 +10,7 @@ import nsfwpy
 
 def test_package_import():
     """Verify package import."""
-    assert nsfwpy.__version__ == "1.0.0"
+    assert nsfwpy.__version__ == "1.0.3"
 
 
 def test_load_models():
