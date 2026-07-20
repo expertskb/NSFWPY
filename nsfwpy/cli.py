@@ -22,7 +22,7 @@ def main():
 @click.option(
     "--model",
     "-m",
-    default="mobilenet_v2",
+    default="nsfw_vit_quantized",
     type=click.Choice(list(DEFAULT_MODEL_PATHS.keys()) + ["custom"]),
     help="Model architecture to use for classification.",
 )

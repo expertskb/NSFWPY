@@ -17,7 +17,7 @@ def main():
     print("=" * 60)
 
     # 1. Load Model
-    model = nsfwpy.load_model("mobilenet_v2")
+    model = nsfwpy.load_model()
 
     # 2. Create batch of synthetic test images
     num_images = 10

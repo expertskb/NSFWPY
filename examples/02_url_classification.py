@@ -12,7 +12,7 @@ def main():
     print("=" * 60)
 
     # 1. Load Model
-    model = nsfwpy.load_model("mobilenet_v2")
+    model = nsfwpy.load_model()
 
     # 2. Remote image URL
     test_url = "https://picsum.photos/400/300"

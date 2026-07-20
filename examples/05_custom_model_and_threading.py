@@ -1,7 +1,7 @@
 """
 Example 05: Custom Backbones & ONNX CPU Thread Optimization
 ------------------------------------------------------------
-Demonstrates how to select different model backbones (MobileNetV2, MobileNetV3, InceptionV3),
+Demonstrates how to select different model variants (nsfw_vit_quantized, nsfw_vit),
 and configure ONNX Runtime CPU multi-threading options.
 """
 
@@ -12,13 +12,13 @@ import nsfwpy
 
 def main():
     print("=" * 60)
-    print(" NSFWPY - Example 05: Model Backbones & Thread Optimization")
+    print(" NSFWPY - Example 05: Model Variants & Thread Optimization")
     print("=" * 60)
 
     # Synthetic test image
     img = Image.fromarray(np.uint8(np.random.rand(224, 224, 3) * 255))
 
-    backbones = ["mobilenet_v2", "mobilenet_v3", "inception_v3"]
+    backbones = ["nsfw_vit_quantized", "nsfw_vit"]
 
     print("\nComparing Inference Speed Across Backbones:")
     print("-" * 55)

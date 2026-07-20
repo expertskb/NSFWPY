@@ -14,7 +14,7 @@ def main():
     print(" NSFWPY - Example 04: In-Memory PIL & Bytes Processing")
     print("=" * 60)
 
-    model = nsfwpy.load_model("mobilenet_v2")
+    model = nsfwpy.load_model()
 
     # 1. Create a PIL Image dynamically in memory
     print("\n[1] Creating synthetic PIL Image in memory...")

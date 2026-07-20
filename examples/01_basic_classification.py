@@ -12,9 +12,9 @@ def main():
     print(" NSFWPY - Example 01: Basic Local Image Classification")
     print("=" * 60)
 
-    # 1. Load the pre-trained MobileNetV2 model
-    print("\n[1/3] Loading NSFWPY model (MobileNetV2)...")
-    model = nsfwpy.load_model("mobilenet_v2")
+    # 1. Load the pre-trained ViT model (nsfw_vit_quantized default)
+    print("\n[1/3] Loading default NSFWPY model (nsfw_vit_quantized)...")
+    model = nsfwpy.load_model()
     print("✓ Model loaded successfully!")
 
     # 2. Specify target image path (using sample or synthetic)

@@ -13,7 +13,7 @@ def main():
     print("=" * 60)
 
     # Load Model
-    model = nsfwpy.load_model("mobilenet_v2")
+    model = nsfwpy.load_model()
 
     # Animated WebP URL
     animated_url = "https://example.com/hello.webp"
